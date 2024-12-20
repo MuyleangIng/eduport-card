@@ -1,102 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="./css/styles.css" />
-    <title>Document</title>
-  </head>
-  <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        #video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        #qr-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scan-region-highlight {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.3);
+        }
+
+        .scan-region-highlight::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #4CAF50;
+            animation: scanning 2s linear infinite;
+        }
+
+        @keyframes scanning {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(200px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .result-container {
+            width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #result {
+            word-break: break-all;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .button:hover {
+            background: #45a049;
+        }
+
+        .button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .scan-region-highlight {
+                width: 150px;
+                height: 150px;
+            }
+
+            @keyframes scanning {
+                0% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(150px);
+                }
+                100% {
+                    transform: translateY(0);
+                }
+            }
+        }
+
+        @media (max-width: 480px) {
+            .scanner-container,
+            .result-container {
+                padding: 15px;
+            }
+
+            .button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
     <div class="container">
-        <!--TODO add header  -->
-      <header>
-        <h1>Most Popular Courses</h1>
-        <p>Choose from hundreds of courses from specialist organizations</p>
-      </header>
-
-      <!-- TODO add sub-navbar -->
-      <nav>
-        <button class="active" > Web Desigsdfghjkn </button>
-        <button> asdrfyuioDevelopment</button>
-        <button> Graphic Design</button>
-        <button> Marketing</button>
-        <button> Finance</button>
-      </nav>
-
-      <!-- TODO add card courses -->
-      <main class="course-grid">
-        <!-- open card course -->
-        <div class="course-card">
-            <div class="course-image">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/08.jpg" alt="">
-            </div>
-            <h2>Sketch from A to Z: for app designer</h2>
-            <p>Proposal indulged no do sociable he throwing settling.</p>
-            <div class="card-footer">
-                <span>12h 56m</span>
-                <span>12 lectures</span>
-
+        <div class="scanner-container">
+            <div id="video-container">
+                <video id="qr-video" playsinline></video>
+                <div class="scan-region-highlight"></div>
             </div>
         </div>
-        <!-- close card course -->
-         <!-- open card course -->
-        <div class="course-card">
-            <div class="course-image">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/08.jpg" alt="">
-            </div>
-            <h2>Sketch from A to Z: for app designer</h2>
-            <p>Proposal indulged no do sociable he throwing settling.</p>
-            <div class="card-footer">
-                <span>12h 56m</span>
-                <span>12 lectures</span>
-
-            </div>
+        
+        <div class="result-container">
+            <p id="result">No QR code detected</p>
+            <button id="startButton" class="button">Start Scanner</button>
         </div>
-        <!-- close card course -->
-         <!-- open card course -->
-        <div class="course-card">
-            <div class="course-image">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/08.jpg" alt="">
-            </div>
-            <h2>Sketch from A to Z: for app designer</h2>
-            <p>Proposal indulged no do sociable he throwing settling.</p>
-            <div class="card-footer">
-                <span>12h 56m</span>
-                <span>12 lectures</span>
-
-            </div>
-        </div>
-        <!-- close card course -->
-         <!-- open card course -->
-        <div class="course-card">
-            <div class="course-image">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/08.jpg" alt="">
-            </div>
-            <h2>Sketch from A to Z: for app designer</h2>
-            <p>Proposal indulged no do sociable he throwing settling.</p>
-            <div class="card-footer">
-                <span>12h 56m</span>
-                <span>12 lectures</span>
-
-            </div>
-        </div>
-        <!-- close card course -->
-         <!-- open card course -->
-        <div class="course-card">
-            <div class="course-image">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/08.jpg" alt="">
-            </div>
-            <h2>Sketch from A to Z: for app designer</h2>
-            <p>Proposal indulged no do sociable he throwing settling.</p>
-            <div class="card-footer">
-                <span>12h 56m</span>
-                <span>12 lectures</span>
-
-            </div>
-        </div>
-        <!-- close card course -->
-      </main>
-
     </div>
-  </body>
+
+    <script>
+        const video = document.getElementById('qr-video');
+        const resultElement = document.getElementById('result');
+        const startButton = document.getElementById('startButton');
+        let scanning = false;
+
+        // Check if the browser supports getUserMedia
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            startButton.addEventListener('click', () => {
+                if (scanning) {
+                    stopScanner();
+                } else {
+                    startScanner();
+                }
+            });
+        } else {
+            startButton.disabled = true;
+            resultElement.innerHTML = 'Sorry, your browser does not support camera access';
+            resultElement.classList.add('error-message');
+        }
+
+        async function startScanner() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = stream;
+                video.play();
+                scanning = true;
+                startButton.textContent = 'Stop Scanner';
+                requestAnimationFrame(scan);
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                resultElement.innerHTML = 'Error accessing camera. Please make sure you have granted camera permissions.';
+                resultElement.classList.add('error-message');
+            }
+        }
+
+        function stopScanner() {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            scanning = false;
+            startButton.textContent = 'Start Scanner';
+            resultElement.textContent = 'No QR code detected';
+            resultElement.classList.remove('error-message');
+        }
+
+        function scan() {
+            if (!scanning) return;
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    console.log('Found QR code:', code.data);
+                    resultElement.textContent = `Found QR code: ${code.data}`;
+                    
+                    // Handle the QR code data - you can modify this part to handle different types of QR codes
+                    if (code.data.startsWith('http')) {
+                        // If it's a URL, you can redirect to it
+                        if (confirm('Would you like to open this URL?')) {
+                            window.open(code.data, '_blank');
+                        }
+                    }
+                }
+            }
+            
+            requestAnimationFrame(scan);
+        }
+
+        // Clean up when the page is closed
+        window.addEventListener('beforeunload', () => {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
 </html>
